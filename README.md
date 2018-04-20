@@ -61,13 +61,15 @@ First of all, we check if GiD is using TK (as you may know, GiD can be executed 
 Init the package, load our step controller file, called /wizard/Wizard_Steps.tcl, and set some variables. See the [Initialize](https://github.com/GiDHome/gid_smart_wizard#initialize) section of the manual.
 
 
-## Data definition
+## Step definition and implementation
 
 Let's start talking about what data is needed in this problemtype, and how this data is organized in steps
 
 ### Step 1: Geometry definition
 
-We need to create a random surface, so the first step is called 'Geometry'. It contains 2 frames, the right one contains an image, and the left one has the inputs and the button to create the geometry. In the prevoius problemtype, a 4 side random geometry was generated wich was fine for the example. Now, in order to explain hoy to implement a button that executes a tcl command, wich takes the value of the items of the window, we allow the user to select the number of vertex and the radius of the geometry.
+We need to create a random surface, so the first step is called 'Geometry'. It contains 2 frames, the right one contains an image, and the left one has the inputs and the button to create the geometry. In the prevoius problemtype, a 4 side random geometry was generated wich was fine for the example. Now, in order to explain how to implement a button that executes a tcl command, wich takes the value of the items of the window, we allow the user to select the number of vertex and the radius of the geometry.
+
+#### Data
 
 ```xml
 <Step id="Geometry" title="Geometry definition" subtitle="Create a regular geometry with n vertex">
@@ -84,7 +86,10 @@ We need to create a random surface, so the first step is called 'Geometry'. It c
 </Step>
 ```
 
-The xml above generates the following step window:
+#### Tcl implementation
+As you learned from the [Controller section](https://github.com/GiDHome/gid_smart_wizard#controller), we need to define a proc called your_wizard_namespace::your_wizard_step_id, in this case **Cmas2d::Wizard::Geometry** win. the great feature of the gid_smart_wizard towards the gid_wizard package is that we don't need to implement the tk part of the window, we can just call the smart_wizard::AutoStep function and let the package work. What we'll need to implement, is the function binded to the Draw button Cmas2d::Wizard::CreateGeometry, that [takes the values from the window](https://github.com/GiDHome/gid_smart_wizard#data-api)
+
+The xml section and tcl function above generate the following step window:
 
 ![image](https://user-images.githubusercontent.com/5918085/39053452-53de199a-44af-11e8-8f82-5083b574cb76.png)
 
