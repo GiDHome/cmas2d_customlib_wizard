@@ -87,9 +87,131 @@ We need to create a random surface, so the first step is called 'Geometry'. It c
 ```
 
 #### Tcl implementation
-As you learned from the [Controller section](https://github.com/GiDHome/gid_smart_wizard#controller), we need to define a proc called your_wizard_namespace::your_wizard_step_id, in this case **Cmas2d::Wizard::Geometry** win. the great feature of the gid_smart_wizard towards the gid_wizard package is that we don't need to implement the tk part of the window, we can just call the smart_wizard::AutoStep function and let the package work. What we'll need to implement, is the function binded to the Draw button Cmas2d::Wizard::CreateGeometry, that [takes the values from the window](https://github.com/GiDHome/gid_smart_wizard#data-api)
+As you learned from the [Controller section](https://github.com/GiDHome/gid_smart_wizard#controller), we need to define a proc called your_wizard_namespace::your_wizard_step_id window_name, in this case **Cmas2d::Wizard::Geometry** win. The great feature of the package gid_smart_wizard towards the gid_wizard package is that we don't need to implement the tk part of the window, we can just call the **smart_wizard::AutoStep** function and let the package work. What we'll need to implement, is the function binded to the Draw button **Cmas2d::Wizard::CreateGeometry**, that takes the values from the window using the [Data Api](https://github.com/GiDHome/gid_smart_wizard#data-api). 
+
+In this step, we don't need to implement the "Next" event, because once the user creates the geometry with the dray button, we don't need to store the data.
+
+```tcl
+# Step 1: Geometry definition window
+proc Cmas2d::Wizard::Geometry { win } {
+    smart_wizard::AutoStep $win Geometry
+}
+
+proc Cmas2d::Wizard::CreateGeometry {} {
+    # Clear the model
+    GidUtils::ResetModel
+
+    # Create the geometry
+    set nvertex [smart_wizard::GetProperty Geometry NVertex,value]
+    set radius [smart_wizard::GetProperty Geometry Radius,value]
+    GiD_Process Geometry Create Object PolygonPNR $nvertex 0.0 0.0 0.0 0.0 0.0 1.0 $radius escape escape   
+    GiD_Process 'Zoom Frame
+
+    # Create group and assign the surface 
+    GiD_Groups create "figure"
+    GiD_EntitiesGroups assign figure surfaces {1}
+    GidUtils::UpdateWindow GROUPS
+}
+```
+#### Result window
 
 The xml section and tcl function above generate the following step window:
 
 ![image](https://user-images.githubusercontent.com/5918085/39053452-53de199a-44af-11e8-8f82-5083b574cb76.png)
+
+### Step 2: Data definition
+
+
+
+#### Data
+
+```xml
+<Step id="Data" title="Material and load definition" subtitle="Assign a material to the surface and some random forces">
+  <Data>
+    <Item n="State" v="0"/>
+    <Item n="Active" v="0"/>
+    <Item n="Visited" v="0"/>
+    <Frame n="Data" position="left" title="Define material data">
+      <Item n="material" pn="Material" v="" type="combo" values="[Cmas2d::GetMaterialsRawList]" onchange="Cmas2d::Wizard::UpdateMaterial" xpath="cmas2d_customlib_data/container[@n='Properties']/condition[@n='Shells']/group/value[@n='material']"/>
+      <Item n="Density" v="Density: 7850" type="label" xpath=""/>
+      <Item n="Info" v="Material properties will be applied when \nyou click Next button" type="label" xpath=""/>
+    </Frame>
+    <Frame n="Image" position="right" row_span="2">
+      <Item n="ImageGeom" v="rammaterial.jpg" type="image"/>
+    </Frame>
+    <Frame position="left" title="Define loads">
+      <Item n="NumberOfLoads" pn="Number of random loads" type="combo" v="1" values="0,1,2,3"/>
+      <Item n="MaxWeight" pn="Max weight value of the loads" type="double" v="1e6" units="Kg"/>
+      <Item n="Info2" v="Loads will be applied when you click Next button" type="label" xpath=""/>
+    </Frame>
+  </Data>
+</Step>
+```
+
+#### Tcl implementation
+
+
+```tcl
+
+# Step 2: Data definition window
+proc Cmas2d::Wizard::Data { win } {
+    smart_wizard::AutoStep $win Data
+}
+
+proc Cmas2d::Wizard::NextData { } {
+     
+    # Material
+    # Clear the previous tree assignation
+    gid_groups_conds::delete {container[@n='Properties']/condition[@n='Shells']/group}
+
+    # Crear una part con los datos que toquen
+    set where {container[@n='Properties']/condition[@n='Shells']} 
+    set gnode [customlib::AddConditionGroupOnXPath $where "figure"]
+   
+    set props [list material]
+    foreach prop $props {
+        set propnode [$gnode selectNodes "./value\[@n = '$prop'\]"]
+        if {$propnode ne "" } {
+            $propnode setAttribute v [smart_wizard::GetProperty Data ${prop},value]
+        }
+    }
+
+    # Loads
+    gid_groups_conds::delete {condition[@n='Point_Weight']/group}
+    set number_of_vertex [smart_wizard::GetProperty Geometry NVertex,value]
+    set number_of_loads [smart_wizard::GetProperty Data NumberOfLoads,value]
+    set max_load [smart_wizard::GetProperty Data MaxWeight,value]
+    set where {condition[@n='Point_Weight']} 
+    set nodes_with_load [list]
+    for {set i 0} {$i < $number_of_loads} {incr i} {
+        set group_name "Load_$i"
+        set node [expr {int(rand()*4)}]
+        while {$node in $nodes_with_load && $node<1} {set node [expr 1 + {int(rand()*$number_of_vertex)}]}
+        lappend nodes_with_load $node
+        if {[GiD_Groups exists $group_name]} {GiD_Groups delete $group_name}
+        GiD_Groups create $group_name
+        GiD_EntitiesGroups assign $group_name points $node 
+        set group_node [customlib::AddConditionGroupOnXPath $where $group_name]
+        set value [format "%.2f" [expr rand()*$max_load]]
+        [$group_node selectNodes "./value\[@n = 'Weight'\]"] setAttribute v $value
+    }
+
+    gid_groups_conds::actualize_conditions_window
+}
+
+proc Cmas2d::Wizard::UpdateMaterial { } {
+    set material [smart_wizard::GetProperty Data material,value]
+    set node [[customlib::GetBaseRoot] selectNodes "container/container\[@n = 'materials'\]/blockdata\[@name = '$material'\]/value\[@n = 'Density'\]"]
+    set density [get_domnode_attribute $node v]
+    smart_wizard::SetProperty Data Density "Density: $density"
+}
+
+}
+```
+#### Result window
+
+The xml section and tcl function above generate the following step window:
+
+![image](https://user-images.githubusercontent.com/5918085/39067511-30c739ee-44d9-11e8-9bef-33d3b4c4013b.png)
+
 
