@@ -1,0 +1,19 @@
+
+Compilation
+
+To compile in Linux - 64 bits
+----------------------------
+
+gcc -m64 -o cmas2d-linux-64.exe cmas2d.c -lm
+
+To compile in Mac OS X - general
+----------------------------
+
+gcc -o cmas2d-macosx-64.exe cmas2d.c -lm
+
+To compile in Linux - 32 bits
+----------------------------
+
+gcc -m32 -o cmas2d-linux-32.exe cmas2d.c -lm
+
+

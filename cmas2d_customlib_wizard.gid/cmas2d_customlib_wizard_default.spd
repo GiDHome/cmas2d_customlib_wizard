@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?><!-- -*- coding: utf-8; mode: SGML -*- -->
+
+<cmas2d_customlib_data version='1.0'>
+  <style show_menubutton_about='0' show_menubutton_search='1'>
+  </style>
+  <display_options frame_width="151" is_frame_open="1"/>
+  <!-- units -->
+  <units>  
+    <!--by now it is compulsory define this node if units are used (could be empty if defaults are enougth)-->
+  </units>
+  
+  <container n="units" pn="Units" icon="units">
+    <value n='units_mesh' pn='Geometry units' unit_mesh_definition="1"/>
+    <value n='units_system' pn='Units system' units_system_definition="1">
+      <dependencies node="//*[@unit_definition or @unit_mesh_definition='1']" att1='change_units_system' v1='{@v}'/> 
+    </value>
+    <container n="basic_units" pn="Basic units" icon="units" help="Basic units to be used in the analysis.">
+      <value n='units_length' pn='Length' unit_definition="L"/>     
+      <value n='units_mass' pn='Mass' unit_definition="M"/>          
+    </container>
+  </container>
+
+  <!-- conditions -->
+  <condition n="Point_Weight" pn="Point Weight" ov="point" ovm="node" icon="constraints" help="Concentrated mass">
+    <value n="Weight" pn="Weight" v="0.0" unit_magnitude="M" units="kg" help="Specify the weight that you want to apply"/>  
+  </condition>
+
+  <!-- properties -->
+  <container n="Properties" pn="Properties" icon="shells" help="Define your materials database and apply them to the surfaces of your problem">
+    <condition n="Shells" pn="Shells" ov="surface" ovm="element" icon="shells" help="Select your material and the surfaces related to it">
+      <value n="material" pn="Material" editable='0' help="Choose a material from the database" values_tree='[GetMaterialsList]'>
+	<edit_command n="Edit materials" pn="Edit materials" icon="material" proc='EditDatabaseList'/>
+      </value>
+    </condition>
+    <include path="xml/materials.xml"/>
+  </container>
+
+  <!-- procs -->
+  <procs>
+    <proc n='GetMaterialsList' args='args'>
+      <![CDATA[
+      Cmas2d::GetMaterialsList $domNode $args
+      ]]>
+    </proc>
+    <proc n='EditDatabaseList' args='args'>
+      <![CDATA[
+      Cmas2d::EditDatabaseList $domNode $dict $boundary_conds $args
+      ]]>
+    </proc>
+  </procs>
+</cmas2d_customlib_data>
