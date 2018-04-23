@@ -180,23 +180,48 @@ proc Cmas2d::Wizard::NextData { } {
             $propnode setAttribute v [smart_wizard::GetProperty Data ${prop},value]
         }
     }
+    
+    ```
+    We also want to define some random mass concentrations so:
+    1. Delete the previous assignations
+    2. Get the number of vertex of the figure and the number of loads
+    3. Get the max value for the random weights
+    4. To apply the loads, create a group, assign a vertex, assign it to the tree, and give a random value.
+    
+    ```tcl
 
     # Loads
+    # Delete the previous assignations
     gid_groups_conds::delete {condition[@n='Point_Weight']/group}
+    
+    # Get the number of vertex of the figure 
     set number_of_vertex [smart_wizard::GetProperty Geometry NVertex,value]
+    
+    # Get the number of loads
     set number_of_loads [smart_wizard::GetProperty Data NumberOfLoads,value]
+    
+    # Get the max value for the random weights
     set max_load [smart_wizard::GetProperty Data MaxWeight,value]
+    
+    # Apply the N loads
     set where {condition[@n='Point_Weight']} 
     set nodes_with_load [list]
     for {set i 0} {$i < $number_of_loads} {incr i} {
+        # Create a new group
         set group_name "Load_$i"
+        if {[GiD_Groups exists $group_name]} {GiD_Groups delete $group_name}
+        GiD_Groups create $group_name
+        
+        # Assign a random node on it
         set node [expr {int(rand()*4)}]
         while {$node in $nodes_with_load && $node<1} {set node [expr 1 + {int(rand()*$number_of_vertex)}]}
         lappend nodes_with_load $node
-        if {[GiD_Groups exists $group_name]} {GiD_Groups delete $group_name}
-        GiD_Groups create $group_name
         GiD_EntitiesGroups assign $group_name points $node 
+        
+        # Assign the group to the tree
         set group_node [customlib::AddConditionGroupOnXPath $where $group_name]
+        
+        # Set the random weight value
         set value [format "%.2f" [expr rand()*$max_load]]
         [$group_node selectNodes "./value\[@n = 'Weight'\]"] setAttribute v $value
     }
@@ -204,6 +229,14 @@ proc Cmas2d::Wizard::NextData { } {
     gid_groups_conds::actualize_conditions_window
 }
 
+```
+As an extra function, we want to inform the user of the density of the selected material, so we binded an onchange event to the combobox. (See the step xml, onchange="Cmas2d::Wizard::UpdateMaterial"). 
+1. Get the selected material from the window
+2. Find the material node in the tree
+3. Get the density of the selected material
+4. Show the density in the label of the window
+
+```tcl
 proc Cmas2d::Wizard::UpdateMaterial { } {
     set material [smart_wizard::GetProperty Data material,value]
     set node [[customlib::GetBaseRoot] selectNodes "container/container\[@n = 'materials'\]/blockdata\[@name = '$material'\]/value\[@n = 'Density'\]"]
@@ -211,7 +244,6 @@ proc Cmas2d::Wizard::UpdateMaterial { } {
     smart_wizard::SetProperty Data Density "Density: $density"
 }
 
-}
 ```
 #### Result window
 
