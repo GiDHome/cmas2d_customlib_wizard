@@ -213,8 +213,8 @@ We also want to define some random mass concentrations so:
         GiD_Groups create $group_name
         
         # Assign a random node on it
-        set node [expr {int(rand()*4)}]
-        while {$node in $nodes_with_load && $node<1} {set node [expr 1 + {int(rand()*$number_of_vertex)}]}
+        set node [expr {int(rand()*$number_of_vertex)}]
+        while {$node in $nodes_with_load || $node<1} {set node [expr 1 + {int(rand()*$number_of_vertex)}]}
         lappend nodes_with_load $node
         GiD_EntitiesGroups assign $group_name points $node 
         
