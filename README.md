@@ -181,7 +181,7 @@ proc Cmas2d::Wizard::NextData { } {
         }
     }
     
-    ```
+```
     We also want to define some random mass concentrations so:
     1. Delete the previous assignations
     2. Get the number of vertex of the figure and the number of loads
