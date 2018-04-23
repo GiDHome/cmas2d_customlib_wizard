@@ -182,13 +182,13 @@ proc Cmas2d::Wizard::NextData { } {
     }
     
 ```
-    We also want to define some random mass concentrations so:
-    1. Delete the previous assignations
-    2. Get the number of vertex of the figure and the number of loads
-    3. Get the max value for the random weights
-    4. To apply the loads, create a group, assign a vertex, assign it to the tree, and give a random value.
+We also want to define some random mass concentrations so:
+1. Delete the previous assignations
+2. Get the number of vertex of the figure and the number of loads
+3. Get the max value for the random weights
+4. To apply the loads, create a group, assign a vertex, assign it to the tree, and give a random value.
     
-    ```tcl
+```tcl
 
     # Loads
     # Delete the previous assignations
