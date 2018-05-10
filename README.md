@@ -318,4 +318,4 @@ The xml section and tcl function above generate the following step window:
 
 ## Conclusion
 
-This is only an example. It's distributed with your GiD. You can find the code in the GiD install folder > problemtypes > Examples > gmas2d_customlib_wizard.
+This is only an example. It's distributed with your GiD. You can find the code in the GiD install folder > problemtypes > Examples > cmas2d_customlib_wizard.
